@@ -40,7 +40,12 @@ files.each do |file|
 
 		case ext
 			when GIF
-				system('convert -coalesce ' + file + ' -resize 1024x768! -channel RGB ' + dir + '/frame_%05d.png');
+				# In theory, a single call to convert could do both GIF extraction
+				# and resizing, but was giving weird results in several cases.
+				# 2 different calls seem to deal with those cases much better
+				# most likely an issue of my own!
+				system('convert -coalesce ' + file + ' ' + dir + '/frame_%05d.png');
+				system('mogrify -resize 1024x768! -channel RGB ' + dir + '/*.png')
 				system('ffmpeg -i ' + dir + '/frame_%05d.png -qscale:v 5 ' + video)
 			when JPG, JPEG, PNG
 				converted_image = dir + '/' + name + '.png'
@@ -56,10 +61,6 @@ end
 
 puts "Video time..."
 
-Dir["temp/*"].each do |item|
-	name = File.basename(item)
-	FileUtils.mv("#{item}/#{name}.mpg", "temp/")
-end
-
+system('mv temp/*/*.mpg temp/')
 system('cat temp/*.mpg > temp/all.mpg')
 system('ffmpeg -i temp/all.mpg output/gif.mpg')
