@@ -12,37 +12,54 @@ def valid_image(file)
 end
 
 puts "Clearing up temp folder"
-Dir["temp/*"].each do |file| 
-	File.delete(file) 
-end
 
-puts "Processing images"
+FileUtils.rm("output/gif.mpg")
+FileUtils.rm_rf("temp")
+FileUtils.mkdir("temp")
+
 # process input folder
 # we pick up valid images,
 # resize them and set them to RGB
-Dir["input/*"].each do |file|
+
+files = Dir["input/*"]
+
+puts "Processing #{files.length} files"
+
+i = 0
+files.each do |file|
 	
 	if valid_image(file)
 		
+		dir = "temp/#{i}"
+
+		FileUtils.mkdir(dir)
+
 		ext = File.extname(file).downcase
 		name = File.basename(file, ext)
+		video = "#{dir}/#{i}.mpg"
 
 		case ext
 			when GIF
-				system('convert -coalesce ' + file + ' -resize 1024x768! -channel RGB temp/' + name + '_frame_%05d.png');
+				system('convert -coalesce ' + file + ' -resize 1024x768! -channel RGB ' + dir + '/frame_%05d.png');
+				system('ffmpeg -i ' + dir + '/frame_%05d.png -qscale:v 5 ' + video)
 			when JPG, JPEG, PNG
-				system('convert ' + file  + ' -resize 1024x768! -channel RGB temp/' + name + '.png')
+				converted_image = dir + '/' + name + '.png'
+				system('convert ' + file  + ' -resize 1024x768! -channel RGB ' + converted_image)
+				system('ffmpeg -loop 1 -f image2 -i ' + converted_image + ' -t 5 -qscale:v 5 ' + video)
 		end
+
+		i += 1
 	end
 end
 
-puts "About to rename all frames..."
-i = 0
-Dir["temp/*"].sort.each do |file|
-	name = 'frame_' + ("%09d" % i) + '.png'
-	File.rename(file, "temp/#{name}")
-	i += 1
-end
+# now stitch all videos together!
 
 puts "Video time..."
-system('ffmpeg -i temp/frame_%09d.png -r 24 output/gif.avi')
+
+Dir["temp/*"].each do |item|
+	name = File.basename(item)
+	FileUtils.mv("#{item}/#{name}.mpg", "temp/")
+end
+
+system('cat temp/*.mpg > temp/all.mpg')
+system('ffmpeg -i temp/all.mpg output/gif.mpg')
