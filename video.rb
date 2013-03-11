@@ -6,6 +6,7 @@ JPG = '.jpg'
 JPEG = '.jpeg'
 PNG = '.png'
 VALID_IMAGES = [GIF, JPG, JPEG, PNG]
+MIN_FRAMES = 24 * 5 # that should be 5 seconds
 
 def valid_image(file)
 	VALID_IMAGES.include? File.extname(file).downcase
@@ -13,7 +14,12 @@ end
 
 puts "Clearing up temp folder"
 
-FileUtils.rm("output/gif.mpg")
+begin 
+	FileUtils.rm("output/gif.mpg")
+rescue
+	# nothing to do here
+end
+
 FileUtils.rm_rf("temp")
 FileUtils.mkdir("temp")
 
@@ -46,13 +52,35 @@ files.each do |file|
 				# 2 different calls seem to deal with those cases much better
 				# most likely an issue of my own!
 				
-				# TODO, if less than 48 frames, let's loop the sequence, otherwise
-				# can't almost see it
 				system('convert -coalesce ' + file + ' ' + dir + '/frame_%05d.png')
 				system('mogrify -resize 1024x768! -depth 8 -type TrueColor ' + dir + '/*.png')
+
+				# for GIFs shorter than MIN_FRAMES we basically duplicate
+				# frames, otherwise would quickly flash and would be very hard 
+				# to notice
+
+				frames = Dir["#{dir}/*"].sort
+				total_frames = current_frame = frames.length
+
+				if total_frames < MIN_FRAMES
+
+					while true
+
+						frames.each do |frame|
+							FileUtils.cp(frame, dir + '/frame_' + ("%05d" % current_frame) + '.png')
+							current_frame += 1
+						end
+
+						if current_frame >= MIN_FRAMES
+							break
+						end
+					end
+				end
+
 				system('ffmpeg -i ' + dir + '/frame_%05d.png -qscale:v 5 ' + video)
 			
 			when JPG, JPEG, PNG
+
 				converted_image = dir + '/' + name + '.png'
 				system('convert ' + file  + ' -resize 1024x768! -depth 8 -type TrueColor ' + converted_image)
 				system('ffmpeg -loop 1 -f image2 -i ' + converted_image + ' -t 5 -qscale:v 5 ' + video)
