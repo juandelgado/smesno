@@ -12,10 +12,21 @@ def valid_image(file)
 	VALID_IMAGES.include? File.extname(file).downcase
 end
 
+def log(txt)
+	puts txt
+	begin
+		log = File.open("log.txt", "a")
+		log.write("#{txt}\n");
+	rescue
+		# nothing to do here
+	end
+end
+
 puts "Clearing up temp folder"
 
 begin 
 	FileUtils.rm("output/gif.mpg")
+	FileUtils.rm("log.txt")
 rescue
 	# nothing to do here
 end
@@ -45,15 +56,29 @@ files.each do |file|
 		video = "#{dir}/#{i}.mpg"
 
 		case ext
+
 			when GIF
 
 				# In theory, a single call to convert could do both GIF extraction
 				# and resizing, but was giving weird results in several cases.
-				# 2 different calls seem to deal with those cases much better
-				# most likely an issue of my own!
+				# 2 different calls seem to deal with those cases much better.
+				# Most likely an issue of my own!
 				
-				system('convert -coalesce ' + file + ' ' + dir + '/frame_%05d.png')
-				system('mogrify -resize 1024x768! -depth 8 -type TrueColor ' + dir + '/*.png')
+				convert_success = system('convert -coalesce ' + file + ' ' + dir + '/frame_%05d.png')
+
+				if !convert_success
+					log("Convert failed for: #{file}")
+					i += 1
+					next
+				end
+
+				mogrify_success = system('mogrify -resize 1024x768! -depth 8 -type TrueColor ' + dir + '/*.png')
+
+				if !mogrify_success
+					log("Mogrify failed for: #{file}")
+					i += 1
+					next
+				end
 
 				# for GIFs shorter than MIN_FRAMES we basically duplicate
 				# frames, otherwise would quickly flash and would be very hard 
