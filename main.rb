@@ -5,6 +5,7 @@ require 'parallel'
 
 require './system.rb'
 require './image.rb'
+require './command.rb'
 require './log.rb'
 
 start_time = Time.now
@@ -30,15 +31,10 @@ if !opts[:force_output] and File.exists?(opts[:output])
 	exit unless answer.downcase == "y"
 end
 
-begin 
-	FileUtils.rm("gif.mpg")
-	FileUtils.rm("log.txt")
-rescue
-	# nothing to do here
-end
+FileUtils.rm(opts[:output]) unless !File.exists?(opts[:output])
 
-	FileUtils.rm_rf("temp")
-	FileUtils.mkdir("temp")
+FileUtils.rm_rf("temp")
+FileUtils.mkdir("temp")
 
 
 # we are good to go from here onwards!
@@ -65,7 +61,7 @@ end
 
 puts "Video time..."
 
-system('mv temp/*/*.mpg temp/')
+Command.execute("mv temp/*/*.mpg temp/")
 
 # This way of joining the videos is recommended
 # by FFMPEG. In theory, the cat command alone should
@@ -74,8 +70,8 @@ system('mv temp/*/*.mpg temp/')
 # of the whole output by FFMPEF itself.
 # So be it.
 
-system('cat temp/*.mpg > temp/all.mpg')
-system('ffmpeg -i temp/all.mpg output/gif.mpg')
+Command.execute("cat temp/*.mpg > temp/all.mpg")
+Command.execute("ffmpeg -i temp/all.mpg #{opts[:output]}")
 
 total_time = (Time.now - start_time)
 formatted_time = Time.at(total_time).gmtime.strftime('%Hh:%Mm:%Ss')

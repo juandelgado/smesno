@@ -36,10 +36,10 @@ class Image
 				# Most likely an issue of my own!
 
 				# First extract all frames
-				execute_command("convert -coalesce #{@path} #{dir}/frame_%05d.png")
+				Command.execute("convert -coalesce #{@path} #{dir}/frame_%05d.png")
 				
 				# Now resize them
-				execute_command("mogrify #{IMAGE_PARAMS} #{dir}/*.png")
+				Command.execute("mogrify #{IMAGE_PARAMS} #{dir}/*.png")
 
 				# For GIFs shorter than MIN_FRAMES we basically duplicate
 				# them, otherwise they would quickly flash and would be  
@@ -65,34 +65,16 @@ class Image
 				end
 
 				# Now generate video
-				execute_command("ffmpeg -i #{dir}/frame_%05d.png -qscale:v 5 #{video}")
+				Command.execute("ffmpeg -i #{dir}/frame_%05d.png -qscale:v 5 #{video}")
 			else
 
 				converted_image = "#{dir}/#{name}.png"
 				
 				#  Resize...
-				execute_command("convert #{@path} #{IMAGE_PARAMS} #{converted_image}")
+				Command.execute("convert #{@path} #{IMAGE_PARAMS} #{converted_image}")
 				
 				# ...then video
-				execute_command("ffmpeg -loop 1 -f image2 -i #{converted_image} -t 5 -qscale:v 5 #{video}")
+				Command.execute("ffmpeg -loop 1 -f image2 -i #{converted_image} -t 5 -qscale:v 5 #{video}")
 		end
-	end
-
-	def execute_command(command)
-
-		stdin, stdout, stderr, wait_thr = Open3.popen3(command)
-		
-		# Adding this here because
-		# otherwise calls to FFMPEG fail.
-		# Would love to know WHY!
-		out = stdout.read.chomp
-
-		stdin.close
-		stdout.close
-		stderr.close
-
-		throw unless wait_thr.value.success?
-
-		wait_thr.value
 	end
 end
