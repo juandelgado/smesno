@@ -2,21 +2,15 @@
 
 Stitch your funnies together for the ultimate lulz.
 
-Basically, given a set of images and videos they are combined into a single video meant to be played fullscreen on a loop.
+Given a set of images and videos combine them into a single video meant to be played fullscreen on a loop (no sound in the outcome video).
 
-On purpose all files are resized to the same size and the quality is not particularly high, it gives the final output that extra level of cheesiness.
+All files are resized to the same size and the quality is not particularly high. This is done on purpose, it gives the final output that extra level of cheesiness.
 
-## Installation
+## Dependecies
 
-Requires ffmpeg, ImageMagic:
-
-```sudo port install ffmpeg
-sudo port install ImageMagick```
-
-Then:
-
-```bundle install```
+ * Docker
+ * Make
 
 ## Usage
 
-```ruby main -i /path/to/folder_with_funnies -o /path/to/output.mpg```
+`make INPUT=/path/to/folder_with_funnies OUTPUT=output.mpg`
