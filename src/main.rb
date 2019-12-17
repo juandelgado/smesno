@@ -7,7 +7,9 @@ require 'parallel'
 require 'tmpdir'
 
 require './system.rb'
-require './image.rb'
+require './funny.rb'
+require './funny_gif.rb'
+require './funny_rest.rb'
 require './command.rb'
 
 start_time = Time.now
@@ -18,7 +20,8 @@ DEFAULT_OUTPUT_FILE_NAME = 'gif.mpg'
 # we need, etc
 opts = Trollop.options do
   opt :input, 'Input folder, where the GIFs are', type: :string
-  opt :output, 'Output file path', type: :string, default: DEFAULT_OUTPUT_FILE_NAME
+  opt :output, 'Output file path',
+      type: :string, default: DEFAULT_OUTPUT_FILE_NAME
   opt :force_output, 'Force output override'
 end
 
@@ -40,22 +43,21 @@ FileUtils.rm(opts[:output]) if File.exist?(opts[:output])
 # creates a temp dir for us
 temp = Dir.mktmpdir
 
-system = System.new
-images = system.get_images(opts[:input])
+funnies = System.new.get_funnies(opts[:input])
 
-abort("Couldn't find images in the input folder") if images.empty?
+abort("Couldn't find funnies in the input folder") if funnies.empty?
 
-puts "#{images.length} images found"
+puts "#{funnies.length} funnies found"
 
-results = Parallel.map_with_index(images) do |image, x|
+Parallel.map_with_index(funnies) do |funny_file, index|
   begin
-    image_dir = "#{temp}/#{x}"
-    FileUtils.mkdir(image_dir)
+    tmp_folder = "#{temp}/#{index}"
+    FileUtils.mkdir(tmp_folder)
 
-    i = Image.new(image)
-    i.process(image_dir, x)
+    f = Funny.get(funny_file, tmp_folder, index)
+    f.process
   rescue StandardError => e
-    puts "\tError processing #{image}"
+    puts "\tError processing #{funny_file}"
     puts "\t\t#{e.message}"
   end
 end

@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
+# Class to interact with the file system
 class System
-  def get_images(input)
-    images = []
+  def get_funnies(input)
+    funnies = []
     files = Dir["#{input}/*"]
 
     files.each do |file|
-      images << file if Image.valid_image(file)
+      funnies << file if Funny.valid_file(file)
     end
 
-    images
+    funnies
   end
 end
