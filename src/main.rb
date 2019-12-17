@@ -7,7 +7,6 @@ require 'tmpdir'
 require './system.rb'
 require './image.rb'
 require './command.rb'
-require './log.rb'
 
 start_time = Time.now
 
