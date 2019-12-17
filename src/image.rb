@@ -36,13 +36,13 @@ class Image
 				# Most likely an issue of my own!
 
 				# First extract all frames
-				Command.execute("convert -coalesce #{@path} #{dir}/frame_%05d.png")
-				
+				Command.execute("convert -coalesce \"#{@path}\" #{dir}/frame_%05d.png")
+
 				# Now resize them
 				Command.execute("mogrify #{IMAGE_PARAMS} #{dir}/*.png")
 
 				# For GIFs shorter than MIN_FRAMES we basically duplicate
-				# them, otherwise they would quickly flash and would be  
+				# them, otherwise they would quickly flash and would be
 				# very hard to notice in the final output.
 
 				frames = Dir["#{dir}/*"].sort
@@ -69,12 +69,12 @@ class Image
 			else
 
 				converted_image = "#{dir}/#{name}.png"
-				
+
 				#  Resize...
-				Command.execute("convert #{@path} #{IMAGE_PARAMS} #{converted_image}")
-				
+				Command.execute("convert \"#{@path}\" #{IMAGE_PARAMS} \"#{converted_image}\"")
+
 				# ...then video
-				Command.execute("ffmpeg -loop 1 -f image2 -i #{converted_image} -t 5 -qscale:v 5 #{video}")
+				Command.execute("ffmpeg -loop 1 -f image2 -i \"#{converted_image}\" -t 5 -qscale:v 5 \"#{video}\"")
 		end
 	end
 end
