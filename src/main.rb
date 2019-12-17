@@ -52,8 +52,9 @@ results = Parallel.map_with_index(images) do |image, x|
 
 		i = Image.new(image)
 		i.process(image_dir, x)
-	rescue
-		puts "Error processing #{image}"
+	rescue StandardError => e
+		puts "\tError processing #{image}"
+		puts "\t\t#{e.message}"
 	end
 end
 
@@ -63,7 +64,7 @@ Command.execute("mv #{temp}/*/*.mpg #{temp}/")
 
 # This way of joining the videos is recommended
 # by FFMPEG. In theory, the cat command alone should
-# suffice, but I've seen Ubuntu's MoviePlayer having trouble 
+# suffice, but I've seen Ubuntu's MoviePlayer having trouble
 # with the output. The problem disappears doing a final encoding
 # of the whole output by FFMPEF itself.
 # So be it.
