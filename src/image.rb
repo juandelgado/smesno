@@ -1,80 +1,76 @@
+# frozen_string_literal: true
+
 class Image
+  IMAGE_PARAMS = '-resize 1024x768! -depth 8 -type TrueColor'
 
-	IMAGE_PARAMS = "-resize 1024x768! -depth 8 -type TrueColor"
+  GIF = '.gif'
+  JPG = '.jpg'
+  JPEG = '.jpeg'
+  PNG = '.png'
+  VALID_IMAGES = [GIF, JPG, JPEG, PNG].freeze
+  MIN_FRAMES = 24 * 5 # that should be 5 seconds
 
-	GIF = '.gif'
-	JPG = '.jpg'
-	JPEG = '.jpeg'
-	PNG = '.png'
-	VALID_IMAGES = [GIF, JPG, JPEG, PNG]
-	MIN_FRAMES = 24 * 5 # that should be 5 seconds
+  def self.valid_image(file)
+    VALID_IMAGES.include? File.extname(file).downcase
+  end
 
-	def self.valid_image(file)
-		VALID_IMAGES.include? File.extname(file).downcase
-	end
+  def initialize(path)
+    @path = path
+  end
 
-	def initialize (path)
-		@path = path
-	end
+  def process(process_path, index)
+    ext = File.extname(@path).downcase
+    name = File.basename(@path, ext)
+    dir = process_path
+    video = "#{dir}/#{index}.mpg"
 
-	def process(process_path, index)
+    puts "Processing #{@path}\n"
 
-		ext = File.extname(@path).downcase
-		name = File.basename(@path, ext)
-		dir = process_path
-		video = "#{dir}/#{index}.mpg"
+    case ext
 
-		puts "Processing #{@path}\n"
+    when GIF
 
-		case ext
+      # In theory, a single call to convert could do both GIF extraction
+      # and resizing, but was giving weird results in several cases.
+      # 2 different calls seem to deal with those cases much better.
+      # Most likely an issue of my own!
 
-			when GIF
+      # First extract all frames
+      Command.execute("convert -coalesce \"#{@path}\" #{dir}/frame_%05d.png")
 
-				# In theory, a single call to convert could do both GIF extraction
-				# and resizing, but was giving weird results in several cases.
-				# 2 different calls seem to deal with those cases much better.
-				# Most likely an issue of my own!
+      # Now resize them
+      Command.execute("mogrify #{IMAGE_PARAMS} #{dir}/*.png")
 
-				# First extract all frames
-				Command.execute("convert -coalesce \"#{@path}\" #{dir}/frame_%05d.png")
+      # For GIFs shorter than MIN_FRAMES we basically duplicate
+      # them, otherwise they would quickly flash and would be
+      # very hard to notice in the final output.
 
-				# Now resize them
-				Command.execute("mogrify #{IMAGE_PARAMS} #{dir}/*.png")
+      frames = Dir["#{dir}/*"].sort
+      total_frames = current_frame = frames.length
 
-				# For GIFs shorter than MIN_FRAMES we basically duplicate
-				# them, otherwise they would quickly flash and would be
-				# very hard to notice in the final output.
+      if total_frames < MIN_FRAMES
 
-				frames = Dir["#{dir}/*"].sort
-				total_frames = current_frame = frames.length
+        loop do
+          frames.each do |frame|
+            FileUtils.cp(frame, dir + '/frame_' + ('%05d' % current_frame) + '.png')
+            current_frame += 1
+          end
 
-				if total_frames < MIN_FRAMES
+          break if current_frame >= MIN_FRAMES
+        end
+      end
 
-					while true
+      # Now generate video
+      Command.execute("ffmpeg -i #{dir}/frame_%05d.png -qscale:v 5 #{video}")
+    else
 
-						frames.each do |frame|
+      converted_image = "#{dir}/#{name}.png"
 
-							FileUtils.cp(frame, dir + '/frame_' + ("%05d" % current_frame) + '.png')
-							current_frame += 1
-						end
+      #  Resize...
+      Command.execute("convert \"#{@path}\" #{IMAGE_PARAMS} \"#{converted_image}\"")
 
-						if current_frame >= MIN_FRAMES
-							break
-						end
-					end
-				end
-
-				# Now generate video
-				Command.execute("ffmpeg -i #{dir}/frame_%05d.png -qscale:v 5 #{video}")
-			else
-
-				converted_image = "#{dir}/#{name}.png"
-
-				#  Resize...
-				Command.execute("convert \"#{@path}\" #{IMAGE_PARAMS} \"#{converted_image}\"")
-
-				# ...then video
-				Command.execute("ffmpeg -loop 1 -f image2 -i \"#{converted_image}\" -t 5 -qscale:v 5 \"#{video}\"")
-		end
-	end
+      # ...then video
+      Command.execute("ffmpeg -loop 1 -f image2 -i \"#{converted_image}\" -t 5 -qscale:v 5 \"#{video}\"")
+    end
+  end
 end
