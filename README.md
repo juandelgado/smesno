@@ -1,4 +1,6 @@
-# GIF-O-MATIC
+# Smešno
+
+Smešno: [funny](https://translate.google.com/#view=home&op=translate&sl=auto&tl=en&text=Sme%C5%A1no).
 
 Stitch your funnies together for the ultimate lulz.
 
@@ -13,4 +15,4 @@ All files are resized to the same size and the quality is not particularly high.
 
 ## Usage
 
-`make INPUT=/path/to/folder_with_funnies OUTPUT=output.mpg`
+`make INPUT=/path/to/folder_with_funnies`
