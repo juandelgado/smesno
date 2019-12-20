@@ -1,0 +1,21 @@
+name: Build, tag and push Docker image to the registry
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v2
+      - name: Build and tag
+        run: make dev-build
+      - name: Lint
+        run: make dev-lint        
+      - name: Docker log in
+        run: docker login -u $DOCKER_USERNAME -p $DOCKER_AUTH_TOKEN
+        if: github.ref == 'production'
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_AUTH_TOKEN: ${{ secrets.DOCKER_AUTH_TOKEN }}
+      - name: Push
+        run: docker push juandelgado/smesno
+        if: github.ref == 'production'

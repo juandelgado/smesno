@@ -3,41 +3,40 @@ PWD ?= $(shell pwd)
 
 default: run
 
-build:
-	@$(DOCKER) build -t gif-o-matic .
-.PHONY: build
-
-run: build
+run:
 	@$(DOCKER) run --rm -it \
 							-v "$(INPUT):/usr/src/app/input" \
 							-w /usr/src/app/src \
-							gif-o-matic \
+							juandelgado/smesno \
 							-i ../input \
 							-o ../input/lulz.mpg
 .PHONY: run
 
-sh: build
+dev-build:
+	@$(DOCKER) build -t juandelgado/smesno .
+.PHONY: dev-build
+
+dev-sh:
 	@$(DOCKER) run --rm -it \
 							--entrypoint /bin/bash \
 							-v "$(INPUT):/usr/src/app/input" \
 							-v $(PWD)/src:/usr/src/app/src \
 							-w /usr/src/app/src \
-							gif-o-matic
-.PHONY: sh
+							juandelgado/smesno
+.PHONY: dev-sh
 
-lint: build
-	@$(DOCKER) run --rm -it \
+dev-lint:
+	@$(DOCKER) run --rm \
 							--entrypoint rubocop \
-							-v "$(INPUT):/usr/src/app/input" \
 							-v $(PWD)/src:/usr/src/app/src \
 							-w /usr/src/app/src \
-							gif-o-matic
-.PHONY: lint
+							juandelgado/smesno
+.PHONY: dev-lint
 
-lock:
+dev-lock:
 	@$(DOCKER) run --rm \
 							-v $(PWD):/usr/src/app \
 							-w /usr/src/app \
 							ruby:2.5 \
 							bundle install
-.PHONY: lock
+.PHONY: dev-lock
