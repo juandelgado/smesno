@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'trollop'
+require 'optimist'
 require 'open3'
 require 'fileutils'
 require 'parallel'
@@ -18,17 +18,17 @@ DEFAULT_OUTPUT_FILE_NAME = 'gif.mpg'
 
 # define options, check we have everything
 # we need, etc
-opts = Trollop.options do
+opts = Optimist.options do
   opt :input, 'Input folder, where the GIFs are', type: :string
   opt :output, 'Output file path',
       type: :string, default: DEFAULT_OUTPUT_FILE_NAME
   opt :force_output, 'Force output override'
 end
 
-Trollop.die :input, 'No input folder' if opts[:input].nil?
-Trollop.die :input, 'Cannot find input folder' unless File.exist?(opts[:input])
+Optimist.die :input, 'No input folder' if opts[:input].nil?
+Optimist.die :input, 'Cannot find input folder' unless File.exist?(opts[:input])
 unless File.directory?(opts[:input])
-  Trollop.die :input, "Input folder doesn't look like a folder!"
+  Optimist.die :input, "Input folder doesn't look like a folder!"
 end
 
 if !opts[:force_output] && File.exist?(opts[:output])
