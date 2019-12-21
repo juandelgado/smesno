@@ -21,7 +21,7 @@ dev-sh:
 							--entrypoint /bin/bash \
 							-v "$(INPUT):/usr/src/app/input" \
 							-v $(PWD)/src:/usr/src/app/src \
-							-w /usr/src/app/src \
+							-w /usr/src/app \
 							juandelgado/smesno
 .PHONY: dev-sh
 
@@ -35,8 +35,8 @@ dev-lint:
 
 dev-lock:
 	@$(DOCKER) run --rm \
-							-v $(PWD):/usr/src/app \
-							-w /usr/src/app \
+							-v $(PWD)/src:/usr/src/app/src \
+							-w /usr/src/app/src \
 							ruby:2.5 \
 							bundle install
 .PHONY: dev-lock
